@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Typing Speed Test</title>
+  <style>
+    :root{
+      --bg1:#f9fafb;
+      --bg2:#e2e8f0;
+      --card:#ffffff;
+      --accent:#3b82f6;
+      --accent-2:#06b6d4;
+      --success:#16a34a;
+      --danger:#dc2626;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{
+      height:100%;
+      font-family:'Poppins',sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+      color:#111827;
+    }
+
+    .app{
+      width:900px;
+      max-width:98%;
+      background:var(--card);
+      border-radius:16px;
+      padding:24px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.1);
+      display:grid;
+      grid-template-columns:1fr 300px;
+      gap:20px;
+    }
+
+    header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+    h1{font-size:22px;color:#111827}
+    .sub{font-size:14px;color:#374151}
+
+    .left, .right{padding:8px}
+    .card{
+      background:#f8fafc;
+      border-radius:10px;
+      padding:16px;
+      border:1px solid #e5e7eb;
+    }
+
+    .text-display{
+      min-height:180px;
+      padding:12px;
+      border-radius:8px;
+      background:#ffffff;
+      border:1px solid #e5e7eb;
+      font-size:18px;
+      line-height:1.8;
+      color:#111827;
+      word-wrap:break-word;
+    }
+
+    .text-display span{padding:2px;border-radius:4px}
+    .text-display .correct{background:rgba(22,163,74,0.15);color:var(--success)}
+    .text-display .wrong{background:rgba(220,38,38,0.1);color:var(--danger)}
+    .text-display .current{border-bottom:2px solid var(--accent)}
+
+    .controls{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+    button{cursor:pointer;border:0;padding:10px 14px;border-radius:8px;font-weight:600;transition:all 0.2s ease}
+    button:hover{opacity:0.9}
+    .btn-start{background:var(--accent);color:#fff}
+    .btn-reset{background:#e5e7eb;color:#111827}
+
+    select{border-radius:8px;padding:10px;background:#f8fafc;border:1px solid #e5e7eb;color:#111827}
+
+    .info{display:flex;gap:12px;margin-top:14px;flex-wrap:wrap}
+    .stat{background:#f8fafc;padding:10px;border-radius:8px;flex:1;text-align:center;border:1px solid #e5e7eb}
+    .stat h3{margin:0;font-size:18px;color:#111827}
+    .stat p{margin:2px 0 0;color:#6b7280;font-size:12px}
+
+    .progress{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden;margin-top:12px}
+    .fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width 300ms linear}
+
+    textarea{
+      width:100%;
+      height:100px;
+      padding:12px;
+      border-radius:8px;
+      border:1px solid #e5e7eb;
+      background:#ffffff;
+      color:#111827;
+      font-size:16px;
+      margin-top:10px;
+      resize:none;
+    }
+
+    footer{grid-column:1/-1;margin-top:10px;color:#6b7280;font-size:13px;text-align:center}
+
+    @media (max-width:850px){.app{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Typing Speed Test</h1>
+      <div class="sub">Timer • Accuracy • Score Tracking</div>
+    </header>
+
+    <div class="left">
+      <div class="card">
+        <div class="text-display" id="textDisplay"></div>
+
+        <div class="controls">
+          <button id="startBtn" class="btn-start">Start</button>
+          <button id="resetBtn" class="btn-reset">Reset</button>
+          <button id="nextBtn" class="btn-reset">Next Paragraph</button>
+          <select id="timeSelect">
+            <option value="15">15s</option>
+            <option value="30">30s</option>
+            <option value="60" selected>60s</option>
+            <option value="120">120s</option>
+          </select>
+        </div>
+
+        <div class="info">
+          <div class="stat"><h3 id="wpm">0</h3><p>WPM</p></div>
+          <div class="stat"><h3 id="accuracy">100%</h3><p>Accuracy</p></div>
+          <div class="stat"><h3 id="time">60s</h3><p>Time</p></div>
+          <div class="stat"><h3 id="errors">0</h3><p>Errors</p></div>
+        </div>
+        <div class="progress"><div class="fill" id="progressFill"></div></div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="card">
+        <h3>Type Here</h3>
+        <textarea id="inputField" placeholder="Press Start to begin" disabled></textarea>
+      </div>
+    </div>
+
+    <footer>Made with ❤️ using HTML, CSS, and JavaScript</footer>
+  </div>
+
+  <script>
+    const textDisplay=document.getElementById('textDisplay');
+    const inputField=document.getElementById('inputField');
+    const startBtn=document.getElementById('startBtn');
+    const resetBtn=document.getElementById('resetBtn');
+    const nextBtn=document.getElementById('nextBtn');
+    const wpmEl=document.getElementById('wpm');
+    const accuracyEl=document.getElementById('accuracy');
+    const timeEl=document.getElementById('time');
+    const errorsEl=document.getElementById('errors');
+    const progressFill=document.getElementById('progressFill');
+    const timeSelect=document.getElementById('timeSelect');
+
+    const PARAGRAPHS=[
+      "In the attic of her grandmother’s house, Lila discovered an ornate brass compass covered in verdigris. When she opened it, the needle spun wildly before settling toward the mirror instead of north. Curiosity overwhelmed her hesitation, and as she touched the glass, a vortex of shimmering light pulled her in. She found herself standing on a beach where time itself seemed to hesitate before flowing forward again.",
+      "Mr. Alden, the town’s solitary clockmaker, was known for his meticulous craftsmanship and enigmatic smile. One evening, a curious customer noticed that none of his clocks ever struck twelve. When asked, the clockmaker’s eyes darkened, and he whispered, “Midnight is when time listens.” No one dared to question him again, though the murmur of ticking clocks haunted their dreams.",
+      "Hidden beneath the old cathedral was a library no one remembered building. The air was perfumed with ancient paper and faint candle smoke. The books spoke—not loudly, but in murmurs, retelling their stories to anyone who dared to listen. Those who stayed too long often forgot their own names, becoming guardians of the whispers forever.",
+      "In a forgotten corner of the city, a musician played a violin made entirely of glass. Its sound was hauntingly fragile, like the sigh of wind through frost. People gathered in silence, afraid that applause might shatter the melody. When the final note faded, the violinist bowed and vanished—leaving only crystalline dust glimmering in the moonlight.",
+      "Elara painted every night under the pale glow of the moon, her brush moving with unearthly grace. One dawn, her neighbors found her easel empty but the moon itself streaked with color—violets, golds, and silvers swirling like oil on water. Some said she had painted her way into the sky; others believed the moon had simply taken her home.",
+      "Every morning, Mina left a folded paper swan on the park bench by the lake. The swan’s delicate wings bore messages written in intricate, looping script—poems of longing and hope. One rainy afternoon, a stranger found the swan dampened but intact and replied with his own folded crane. A silent correspondence began, weaving a fragile connection between two lonely hearts."
+    ];
+
+    let currentParagraphIndex=0;
+    let timer,totalTime=60,timeLeft=60,running=false;
+    let position=0,errors=0,correctChars=0,totalChars=0;
+
+    function renderParagraph(){
+      const text=PARAGRAPHS[currentParagraphIndex];
+      textDisplay.innerHTML='';
+      for(let i=0;i<text.length;i++){
+        const span=document.createElement('span');
+        span.textContent=text[i];
+        if(i===0)span.classList.add('current');
+        textDisplay.appendChild(span);
+      }
+      totalChars=text.length;
+      inputField.value='';
+    }
+
+    function nextParagraph(){
+      currentParagraphIndex=(currentParagraphIndex+1)%PARAGRAPHS.length;
+      resetAll();
+      renderParagraph();
+    }
+
+    inputField.addEventListener('input',e=>{
+      if(!running)return;
+      const val=e.target.value;
+      const spans=textDisplay.querySelectorAll('span');
+      const expected=spans[position]?spans[position].textContent:'';
+      const char=val[val.length-1];
+      if(char===expected){
+        spans[position].classList.remove('current');
+        spans[position].classList.add('correct');
+        position++;correctChars++;
+      }else{
+        spans[position].classList.remove('current');
+        spans[position].classList.add('wrong');
+        position++;errors++;
+      }
+      if(spans[position])spans[position].classList.add('current');
+      updateStats();
+    });
+
+    startBtn.addEventListener('click',()=>{
+      if(running)return;
+      totalTime=parseInt(timeSelect.value,10);
+      timeLeft=totalTime;
+      running=true;
+      position=0;errors=0;correctChars=0;
+      inputField.disabled=false;
+      inputField.focus();
+      timer=setInterval(()=>{
+        timeLeft--;
+        updateStats();
+        if(timeLeft<=0)endSession();
+      },1000);
+    });
+
+    resetBtn.addEventListener('click',resetAll);
+    nextBtn.addEventListener('click',nextParagraph);
+
+    function resetAll(){
+      clearInterval(timer);
+      running=false;position=0;errors=0;correctChars=0;
+      inputField.value='';inputField.disabled=true;
+      updateStats();
+    }
+
+    function endSession(){
+      clearInterval(timer);
+      running=false;
+      inputField.disabled=true;
+      const wpm=Math.round((correctChars/5)/(totalTime/60));
+      alert(`Time's up! WPM: ${wpm}`);
+    }
+
+    function updateStats(){
+      timeEl.textContent=timeLeft+'s';
+      errorsEl.textContent=errors;
+      const totalTyped=correctChars+errors;
+      const acc=totalTyped===0?100:Math.round((correctChars/totalTyped)*100);
+      accuracyEl.textContent=acc+'%';
+      const elapsed=(totalTime-timeLeft)/60;
+      const wpmCalc=elapsed>0?Math.round((correctChars/5)/elapsed):0;
+      wpmEl.textContent=wpmCalc;
+      const pct=Math.min(100,Math.round((position/Math.max(1,totalChars))*100));
+      progressFill.style.width=pct+'%';
+    }
+
+    renderParagraph();
+    inputField.disabled=true;
+  </script>
+</body>
+</html>
